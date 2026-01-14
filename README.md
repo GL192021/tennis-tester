@@ -94,7 +94,9 @@ data/processed/combined_STARTYEAR-ENDYEAR.csv
 ### 2. Preprocessing
 
 Handled in code by:
+```python
 from preprocessing import preprocessing
+```
 
 This step:
 - cleans missing values,
@@ -108,7 +110,9 @@ This step:
 ### 3. Feature Engineering
 
 Handled in code by:
+```python
 from feature_engineering import *
+```
 
 This step adds:
 - previous-match statistics,
@@ -120,7 +124,9 @@ This step adds:
 ### 4. Time-aware splitting
 
 Handled in code by:
+```python
 from preparing_data_for_tree_models import *
+```
 
 This creates chronological train/test splits that respect match order.
 
@@ -130,7 +136,9 @@ This creates chronological train/test splits that respect match order.
 ### 5. Model training and evaluation
 
 Run:
-python 5.tree_models.py
+```python
+5.tree_models.py
+```
 
 This runs experiments for:
 - baseline model,
@@ -148,7 +156,9 @@ Outputs:
 ## Installation
 
 Install the dependencies with:
+```python
 pip install -r requirements.txt
+```
 
 Main dependencies:
 - pandas
@@ -170,10 +180,12 @@ All model testing respects the chronological order of matches.
 
 Reproducible project structure:
 All file paths are relative to the repository:
+```
 data/raw/
 data/processed/
 models/
 results/
+```
 
 Separation of concerns:
 - raw data → never modified
