@@ -24,6 +24,7 @@ with different feature configurations:
 
 Repository Structure
 
+```
 tennis-tester/
 │
 ├── data/
@@ -42,6 +43,7 @@ tennis-tester/
 ├── requirements.txt
 ├── .gitignore
 └── README.txt
+```
 
 Only the code and folder structure are tracked in GitHub.
 Datasets, trained models, and experimental results are generated locally.
