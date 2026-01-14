@@ -58,10 +58,10 @@ Source:
 https://github.com/JeffSackmann/tennis_atp
 
 Download the yearly match files, for example:
-- atp_matches_2019.csv
-- atp_matches_2020.csv
-- atp_matches_2021.csv
-  ...
+atp_matches_2019.csv
+atp_matches_2020.csv
+atp_matches_2021.csv
+...
 
 Place them in:
 data/raw/
