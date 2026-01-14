@@ -81,7 +81,9 @@ The project follows a clear, numbered pipeline.
 ### 1. Combine yearly datasets
 
 Run:
-```python 1.combine_years.py```
+```python
+1.combine_years.py
+```
 
 This reads all atp_matches_YYYY.csv files from data/raw/ and creates:
 data/processed/combined_STARTYEAR-ENDYEAR.csv
