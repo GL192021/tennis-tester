@@ -22,6 +22,7 @@ with different feature configurations:
 
 ------------------------------------------------------------
 
+
 ## Repository Structure
 
 ```
@@ -50,6 +51,7 @@ Datasets, trained models, and experimental results are generated locally.
 
 ------------------------------------------------------------
 
+
 ## Data
 
 The project uses historical ATP match data.
@@ -71,6 +73,7 @@ The repository does not include the data files themselves.
 
 ------------------------------------------------------------
 
+
 ## Pipeline Overview
 
 The project follows a clear, numbered pipeline.
@@ -85,6 +88,7 @@ data/processed/combined_STARTYEAR-ENDYEAR.csv
 
 ------------------------------------------------------------
 
+
 ### 2. Preprocessing
 
 Handled in code by:
@@ -98,6 +102,7 @@ This step:
 
 ------------------------------------------------------------
 
+
 ### 3. Feature Engineering
 
 Handled in code by:
@@ -109,6 +114,7 @@ This step adds:
 
 ------------------------------------------------------------
 
+
 ### 4. Time-aware splitting
 
 Handled in code by:
@@ -117,6 +123,7 @@ from preparing_data_for_tree_models import *
 This creates chronological train/test splits that respect match order.
 
 ------------------------------------------------------------
+
 
 ### 5. Model training and evaluation
 
@@ -135,6 +142,7 @@ Outputs:
 
 ------------------------------------------------------------
 
+
 ## Installation
 
 Install the dependencies with:
@@ -147,6 +155,7 @@ Main dependencies:
 - xgboost
 
 ------------------------------------------------------------
+
 
 ## Design Principles
 
@@ -171,6 +180,7 @@ Separation of concerns:
 
 ------------------------------------------------------------
 
+
 ## Status
 
 This is an ongoing project.
@@ -181,6 +191,7 @@ Planned future improvements include:
 - comparison with additional model families.
 
 ------------------------------------------------------------
+
 
 ## Motivation
 
