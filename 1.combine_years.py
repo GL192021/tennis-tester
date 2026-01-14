@@ -2,10 +2,8 @@ import os
 import re
 import pandas as pd
 
-main_path = "C:/Users/lampris21/Desktop/tennis_predictor__level_1"
-
-
-
+main_path = "data/raw"
+output_path = "data/processed"
 
 years = []
 combined_data = {}
@@ -29,7 +27,8 @@ for fname in os.listdir(main_path):
 start_year = min(years)
 end_year = max(years)
 
-# pd.DataFrame(combined_data).to_csv(os.path.join(main_path, f"combined_{start_year}-{end_year}.csv"), index=False)
+pd.DataFrame(combined_data).to_csv(os.path.join(output_path, f"combined_{start_year}-{end_year}.csv"), index=False)
+
 
 
 
