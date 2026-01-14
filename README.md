@@ -22,7 +22,7 @@ with different feature configurations:
 
 ------------------------------------------------------------
 
-Repository Structure
+## Repository Structure
 
 ```
 tennis-tester/
@@ -50,7 +50,7 @@ Datasets, trained models, and experimental results are generated locally.
 
 ------------------------------------------------------------
 
-Data
+## Data
 
 The project uses historical ATP match data.
 
@@ -71,11 +71,11 @@ The repository does not include the data files themselves.
 
 ------------------------------------------------------------
 
-Pipeline Overview
+## Pipeline Overview
 
 The project follows a clear, numbered pipeline.
 
-1. Combine yearly datasets
+### 1. Combine yearly datasets
 
 Run:
 python 1.combine_years.py
@@ -85,7 +85,7 @@ data/processed/combined_STARTYEAR-ENDYEAR.csv
 
 ------------------------------------------------------------
 
-2. Preprocessing
+### 2. Preprocessing
 
 Handled in code by:
 from preprocessing import preprocessing
@@ -98,7 +98,7 @@ This step:
 
 ------------------------------------------------------------
 
-3. Feature Engineering
+### 3. Feature Engineering
 
 Handled in code by:
 from feature_engineering import *
@@ -109,7 +109,7 @@ This step adds:
 
 ------------------------------------------------------------
 
-4. Time-aware splitting
+### 4. Time-aware splitting
 
 Handled in code by:
 from preparing_data_for_tree_models import *
@@ -118,7 +118,7 @@ This creates chronological train/test splits that respect match order.
 
 ------------------------------------------------------------
 
-5. Model training and evaluation
+### 5. Model training and evaluation
 
 Run:
 python 5.tree_models.py
@@ -135,7 +135,7 @@ Outputs:
 
 ------------------------------------------------------------
 
-Installation
+## Installation
 
 Install the dependencies with:
 pip install -r requirements.txt
@@ -148,7 +148,7 @@ Main dependencies:
 
 ------------------------------------------------------------
 
-Design Principles
+## Design Principles
 
 No data leakage:
 Only information available before a match starts is used as model input.
@@ -171,7 +171,7 @@ Separation of concerns:
 
 ------------------------------------------------------------
 
-Status
+## Status
 
 This is an ongoing project.
 Planned future improvements include:
@@ -182,7 +182,7 @@ Planned future improvements include:
 
 ------------------------------------------------------------
 
-Motivation
+## Motivation
 
 This project was developed as a personal machine learning portfolio project to demonstrate:
 - applied ML engineering,
