@@ -137,11 +137,11 @@ def sorting_matches(data, special_tournaments=special_tournaments, round_mapping
     # mark tournaments as special
     data["is_special"] = data["tourney_name"].isin(special_tournaments)
 
-    # first sort by date ascending (chronological order)
+    # first sort by date ascending (chronological order) - global ordering
     date_sorted_data = data.sort_values(["tourney_date"], ascending=False)
 
-    # group by tournament but preserve global order
-    sorted_data = date_sorted_data.groupby("tourney_name", group_keys=False, sort=False).apply(sort_tournament_group)
+    # group by tournament but preserve global order and locally order each tournament
+    sorted_data = date_sorted_data.groupby(["tourney_name", "tourney_date"], group_keys=False, sort=False).apply(sort_tournament_group)
 
     # drop helper column
     sorted_data = sorted_data.drop(columns=["is_special"])
@@ -252,4 +252,5 @@ def preprocessing(data, percent, random_state=None, special_tournaments=special_
 
 
     return swapped_data, labels
+
 
