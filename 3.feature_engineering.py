@@ -14,61 +14,89 @@ import pandas as pd
 
 def single_prev_match_stats(data):
     """
-    :param train_set: takes as an input the name of the dataset where now we have p1 & p2, and the first player is not always
-           the winner.
-    :return: it returns (and saves) a new DataFrame that now also has the previous matches stats for each player-so we have a DF with some extra columns
-             (automatically, if the previous match does not exist (first tournament or RR rounds) it puts NaN for the previous match's stats.)
+    dataset must be in chronological order (future -> past)
     """
-    data_2 = data.copy()
+    df = data.copy()
+
+    n = len(df)
 
     prev_stats_dict = {}
-    for indx, row in data_2.loc[:].iterrows():
-        for player in [row["p1_id"], row["p2_id"]]:
-            prev_stats = np.nan, np.nan
-            for indx2, row2 in data_2.loc[indx+1:].iterrows():
-                if (row2["p1_id"] == player or row2["p2_id"] == player) and indx2 > indx and f"prev_p_{player}__for_row{indx}" not in prev_stats_dict:
-                    if row2["p1_id"] == player:
-                        prev_stats = indx2, row2[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p1_hand_enc', 'p1_ioc_enc', 'p1_entry_enc', 'p1_ace', 'p1_df',
-                                                                     'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
-                                                                     'p1_bpSaved', 'p1_bpFaced']]
-                    elif row2["p2_id"] == player:
-                        prev_stats = indx2, row2[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p2_hand_enc', 'p2_ioc_enc', 'p2_entry_enc', 'p2_ace', 'p2_df',
-                                                                     'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
-                                                                     'p2_bpSaved', 'p2_bpFaced']]
-                    break
-            prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = prev_stats
+
+    prev_stats_pre = np.empty((n, 2), dtype=object)
 
 
-    return prev_stats_dict
+    for i in range(n):
+        j = n-i-1
 
+        row = df.iloc[j]
 
+        p1 = row.p1_id
+        p2 = row.p2_id
 
+        prev_stats_pre[j, 0] = prev_stats_dict.get(p1, np.nan)
+        prev_stats_pre[j, 1] = prev_stats_dict.get(p2, np.nan)
 
-
-
-def single_prev_match_stats_same_surface(data):
-        data = data.copy()
-
-        prev_stats_dict = {}
-        for indx, row in data.iloc[:].iterrows():
-            surface = row["surface"]
-            for player in [row["p1_id"], row["p2_id"]]:
-                prev_stats = np.nan, np.nan
-                for indx2, row2 in data.iloc[indx+1:].iterrows():
-                    surface_2 = row2["surface"]
-                    if (row2["p1_id"] == player or row2["p2_id"] == player) and surface == surface_2 and indx2 > indx and f"prev_p_{player}__for_row{indx}" not in prev_stats_dict:
-                        if row2["p1_id"] == player:
-                            prev_stats = indx2, row2[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p1_hand_enc', 'p1_ioc_enc', 'p1_entry_enc', 'p1_ace', 'p1_df',
+        prev_stats_dict[p1] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p1_hand_enc', 'p1_ioc_enc', 'p1_entry_enc', 'p1_ace', 'p1_df',
                                                                          'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
                                                                          'p1_bpSaved', 'p1_bpFaced']]
-                        elif row2["p2_id"] == player:
-                            prev_stats = indx2, row2[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p2_hand_enc', 'p2_ioc_enc', 'p2_entry_enc', 'p2_ace', 'p2_df',
+
+        prev_stats_dict[p2] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p2_hand_enc', 'p2_ioc_enc', 'p2_entry_enc', 'p2_ace', 'p2_df',
                                                                          'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
                                                                          'p2_bpSaved', 'p2_bpFaced']]
-                        break
-                prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = prev_stats
 
-        return prev_stats_dict
+
+    df_prev_stats = pd.DataFrame({
+        "p1_single_prev_stats": prev_stats_pre[:,0],
+        "p2_single_prev_stats": prev_stats_pre[:,1],
+    })
+
+
+    return df_prev_stats
+
+
+
+def single_prev_match_stats_sam_surface(data):
+    """
+    dataset must be in chronological order (future -> past)
+    """
+    df = data.copy()
+
+    n = len(df)
+
+    prev_stats_dict_same_surface = {}
+
+    prev_stats_pre_same_surface = np.empty((n, 2), dtype=object)
+
+
+    for i in range(n):
+        j = n-i-1
+
+        row = df.iloc[j]
+
+        surface = row.surface
+
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        prev_stats_pre_same_surface[j, 0] = prev_stats_dict_same_surface.get((p1,surface), np.nan)
+        prev_stats_pre_same_surface[j, 1] = prev_stats_dict_same_surface.get((p2,surface), np.nan)
+
+        prev_stats_dict_same_surface[(p1,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p1_hand_enc', 'p1_ioc_enc', 'p1_entry_enc', 'p1_ace', 'p1_df',
+                                                                         'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
+                                                                         'p1_bpSaved', 'p1_bpFaced']]
+
+        prev_stats_dict_same_surface[(p2,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p2_hand_enc', 'p2_ioc_enc', 'p2_entry_enc', 'p2_ace', 'p2_df',
+                                                                         'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
+                                                                         'p2_bpSaved', 'p2_bpFaced']]
+
+
+    df_prev_stats_same_surface = pd.DataFrame({
+        "p1_single_prev_stats_same_surface": prev_stats_pre_same_surface[:,0],
+        "p2_single_prev_stats_same_surface": prev_stats_pre_same_surface[:,1],
+    })
+
+
+    return df_prev_stats_same_surface
 
 
 
@@ -465,6 +493,7 @@ def add_surface_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
     })
 
     return df_surface_elo
+
 
 
 
