@@ -86,21 +86,27 @@ def avrg_stats_from_multiple_prev_matches(data, prev_match_num = 5):
             prev_matches_lst_for_each_player = []
             prev_matches_found = 0
             key = f"prev_p_{player}__for_row{indx}"
-            # print(player)
-            # print(indx)
+
             while prev_matches_found < prev_match_num:
                 val = prev_stats_dict[key]
                 idx_2 = val[0]
-                # print(idx_2, type(idx_2))
                 prev_stats = val[1]
-                prev_matches_lst_for_each_player.append(val)
+
                 if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
                     break
+
                 idx_2 = int(idx_2)
                 prev_matches_lst_for_each_player.append(prev_stats)
                 prev_matches_found += 1
                 key = f"prev_p_{player}__for_row{idx_2}"
-            avrg_prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = prev_matches_lst_for_each_player
+
+            if prev_matches_found == 0:
+                avrg_prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = np.nan
+            else:
+                avrg_prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = (
+                    pd.concat(prev_matches_lst_for_each_player, axis=1)
+                      .mean(axis=1)
+                )
 
     return avrg_prev_stats_dict
 
@@ -117,37 +123,231 @@ def avrg_stats_from_multiple_prev_matches_same_surface(train_set, prev_match_num
     avrg_prev_stats_same_surface_dict = {}
     for indx, row in data_2.loc[:].iterrows():
         for player in [row["p1_id"], row["p2_id"]]:
+
             prev_matches_lst_for_each_player = []
             prev_matches_found = 0
             key = f"prev_p_{player}__for_row{indx}"
+
             while prev_matches_found < prev_match_num:
                 val = prev_stats_same_surf_dict[key]
                 idx_2 = val[0]
                 prev_stats = val[1]
-                prev_matches_lst_for_each_player.append(prev_stats_same_surf_dict[key])
+
                 if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
                     break
+
                 idx_2 = int(idx_2)
                 prev_matches_lst_for_each_player.append(prev_stats)
                 prev_matches_found += 1
                 key = f"prev_p_{player}__for_row{idx_2}"
-            avrg_prev_stats_same_surface_dict[f"prev_p_{player}__for_row{indx}"] = prev_matches_lst_for_each_player
+
+            if prev_matches_found == 0:
+                avrg_prev_stats_same_surface_dict[f"prev_p_{player}__for_row{indx}"] = np.nan
+            else:
+                avrg_prev_stats_same_surface_dict[f"prev_p_{player}__for_row{indx}"] = (
+                    pd.concat(prev_matches_lst_for_each_player, axis=1)
+                      .mean(axis=1)
+                )
 
     return avrg_prev_stats_same_surface_dict
 
 
 ''' OVERALL PLAYER STATS '''
+def overall_sats(data):
+    prev_stats_dict = single_prev_match_stats(data)
+    data = data.copy()
+
+    overall_stats = {}
+    for indx, row in data.iterrows():
+        for player in [row["p1_id"], row["p2_id"]]:
+
+            prev_matches_lst_for_each_player = []
+            prev_matches_found = 0
+            key = f"prev_p_{player}__for_row{indx}"
+
+            while key in prev_stats_dict:
+                idx_2, prev_stats = prev_stats_dict[key]
+                idx_2 = int(idx_2)
+
+                if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
+                    break
+
+                prev_matches_lst_for_each_player.append(prev_stats)
+                prev_matches_found += 1
+                key = f"prev_p_{player}__for_row{int(idx_2)}"
+
+            if prev_matches_found == 0:
+                overall_stats[f"prev_p_{player}__for_row{indx}"] = np.nan
+            else:
+                overall_stats[f"prev_p_{player}__for_row{indx}"] = (
+                    pd.concat(prev_matches_lst_for_each_player, axis=1)
+                      .mean(axis=1)
+                )
+
+    return overall_stats
+
 ''' OVERALL PLAYER SURFACE STATS '''
+def overall_sats_sam_surface(data):
+    prev_stats_dict_same_surface = single_prev_match_stats_same_surface(data)
+    data = data.copy()
+
+    overall_stats_same_surface = {}
+    for indx, row in data.iterrows():
+        for player in [row["p1_id"], row["p2_id"]]:
+
+            prev_matches_lst_for_each_player = []
+            prev_matches_found = 0
+            key = f"prev_p_{player}__for_row{indx}"
+
+            while key in prev_stats_dict_same_surface:
+                idx_2, prev_stats = prev_stats_dict_same_surface[key]
+                idx_2 = int(idx_2)
+
+                if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
+                    break
+
+                prev_matches_lst_for_each_player.append(prev_stats)
+                prev_matches_found += 1
+                key = f"prev_p_{player}__for_row{int(idx_2)}"
+
+            if prev_matches_found == 0:
+                overall_stats_same_surface[f"prev_p_{player}__for_row{indx}"] = np.nan
+            else:
+                overall_stats_same_surface[f"prev_p_{player}__for_row{indx}"] = (
+                    pd.concat(prev_matches_lst_for_each_player, axis=1)
+                      .mean(axis=1)
+                )
+
+    return overall_stats_same_surface
 
 
 
 
-''' FATIGUE '''
-''' AND INJURY'''
-#CONSECUTIVE MATCHES, DAYS SINCE LAST MATCH etc
+''' CONSECUTIVE MATCHES '''
+# possibly FATIGUE
+#implementation: matches in the last 7, 15 and 30 days
+#                   put in the minutes and/or sets they played
+
+'''MOMENTUM'''
+#consecutive wins or win ratio of n last matches
+#implementation: win ratio
+
+''' DAYS SINCE LAST MATCH'''
+# a bit confusing stat: possibly INJURY but also could be long break -> refreshed  and/or  period of not many
+#                       tournaments (somewhere after the US open)
+
+
 
 ''' H2H '''
+def h2h(data, labels):
+    """
+    dataset must be in chronological order (future -> past)
+    labels must be aligned to dataset rows (same row order), where:
+      labels[i] = 0 => p1 won
+      labels[i] = 1 => p2 won
+
+    Returns dataset_h2h_surface with:
+    "h2h_p1_p2_pre", "h2h_p2_p1_pre":  h2h up to any given moment
+    """
+    df = data.copy()
+
+    h2h = {}
+
+    h2h_p1_p2_pre = np.empty(len(df), dtype=int)
+    h2h_p2_p1_pre = np.empty(len(df), dtype=int)
+
+    n = len(df)
+
+    initital_h2h = 0
+
+    for i in range(n):
+        j = n-i-1
+
+        row = df.iloc[j]
+
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        h2h_p1_p2 = h2h.get((p1, p2), initital_h2h)
+        h2h_p2_p1 = h2h.get((p2, p1), initital_h2h)
+
+        # 1) FEATURES = pre-match h2h (strictly from previous matches)
+        h2h_p1_p2_pre[j] = h2h_p1_p2
+        h2h_p2_p1_pre[j] = h2h_p2_p1
+
+        # 2) update ONLY AFTER h2h features are recorded
+        delta = 1 if labels[j] == 0 else -1
+
+        h2h[(p1, p2)] = h2h_p1_p2 + delta
+        h2h[(p2, p1)] = h2h_p2_p1 - delta
+
+
+    df_h2h = pd.DataFrame({
+        "h2h_p1_p2_pre": h2h_p1_p2_pre,
+        "h2h_p2_p1_pre": h2h_p2_p1_pre,
+    })
+
+    return df_h2h
+
+
 ''' SURFACE H2H'''
+def h2h_surface(data, labels):
+    """
+    dataset must be in chronological order (future -> past)
+    labels must be aligned to dataset rows (same row order), where:
+      labels[i] = 0 => p1 won
+      labels[i] = 1 => p2 won
+    
+    Returns dataset_h2h_surface with:
+      "h2h_p1_p2_pre_surface", "h2h_p2_p1_pre_surface": surface h2h up to any given moment
+    """
+    df = data.copy()
+
+    h2h_surface = {}
+
+    h2h_p1_p2_pre_surface = np.empty(len(df), dtype=int)
+    h2h_p2_p1_pre_surface = np.empty(len(df), dtype=int)
+
+    n = len(df)
+
+    initital_h2h = 0
+
+    for i in range(n):
+        j = n-i-1
+
+        row = df.iloc[j]
+        
+        surface = row.surface
+
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        h2h_p1_p2_surface = h2h_surface.get((p1, p2, surface), initital_h2h)
+        h2h_p2_p1_surface = h2h_surface.get((p2, p1, surface), initital_h2h)
+
+        # 1) FEATURES = pre-match h2h (strictly from previous matches)
+        h2h_p1_p2_pre_surface[j] = h2h_p1_p2_surface
+        h2h_p2_p1_pre_surface[j] = h2h_p2_p1_surface
+
+        # 2) update ONLY AFTER h2h features are recorded
+        delta = 1 if labels[j] == 0 else -1
+
+        h2h_surface[(p1, p2, surface)] = h2h_p1_p2_surface + delta
+        h2h_surface[(p2, p1, surface)] = h2h_p2_p1_surface - delta
+
+
+    df_h2h_surface = pd.DataFrame({
+        "h2h_p1_p2_pre_surface": h2h_p1_p2_pre_surface,
+        "h2h_p2_p1_pre_surface": h2h_p2_p1_pre_surface,
+    })
+
+    return df_h2h_surface
+
+
+
+
+
+
 
 
 ''' ELO '''
@@ -159,7 +359,7 @@ def add_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
       y[i] = 1 => p2 won
 
     Returns dataset_elo with:
-      elo_p1_pre, elo_p2_pre, elo_diff, elo_p1_win_prob
+      elo_p1_pre, elo_p2_pre, elo_diff, elo_p1_win_prob: elo up to any given moment
     """
     df = dataset.copy()
 
@@ -211,3 +411,62 @@ def add_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
 
 
 ''' SURFACE ELO '''
+def add_surface_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
+    """
+    dataset must be in chronological order (future -> past).
+    y must be aligned to dataset rows (same row order), where:
+      y[i] = 0 => p1 won
+      y[i] = 1 => p2 won
+
+    Returns dataset_elo with:
+    surface_elo_p1_pre, surface_elo_p2_pre, surface_elo_diff, surface_elo_p1_win_prob: surface elo up to any given moment
+    """
+    df = dataset.copy()
+
+    def expected(r1, r2):
+        return 1.0 / (1.0 + 10.0 ** ((r2 - r1) / scale))
+
+    surface_elo = {}
+
+    surface_elo_p1_pre = np.empty(len(df), dtype=float)
+    surface_elo_p2_pre = np.empty(len(df), dtype=float)
+    surface_elo_prob = np.empty(len(df), dtype=float)
+
+    n = len(df)
+
+    for i in range(n):
+        j = n-i-1
+        row = df.iloc[j]
+
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        surface = row.surface
+
+        r1 = surface_elo.get((p1, surface), initial_elo)
+        r2 = surface_elo.get((p2, surface), initial_elo)
+
+        # 1) FEATURES = pre-match ratings (strictly from previous matches)
+        surface_elo_p1_pre[j] = r1
+        surface_elo_p2_pre[j] = r2
+        p = expected(r1, r2)
+        surface_elo_prob[j] = p
+
+        # 2) update ONLY AFTER features are recorded
+        S = 1.0 - float(y[j])  # p1 win indicator
+        surface_elo[(p1, surface)] = r1 + k * (S - p)
+        surface_elo[(p2, surface)] = r2 + k * ((1.0 - S) - (1.0 - p))
+
+    df_surface_elo = pd.DataFrame({
+        "surface_elo_p1_pre": surface_elo_p1_pre,
+        "surface_elo_p2_pre": surface_elo_p2_pre,
+        "surface_elo_diff": surface_elo_p1_pre - surface_elo_p2_pre,
+        "surface_elo_p1_win_prob": surface_elo_prob
+    })
+
+    return df_surface_elo
+
+
+
+
+
