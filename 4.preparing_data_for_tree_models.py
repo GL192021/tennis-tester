@@ -111,7 +111,7 @@ H2H_FEATURES = ["H2H"]
 
 
 def build_features_for_trees(
-        df: pd.DataFrame,
+        data: pd.DataFrame,
         use_prev_stats: bool = True,
         use_av_prev_stats: bool = False,
         n_prev_matches: list = [],
@@ -120,14 +120,29 @@ def build_features_for_trees(
         use_h2h: bool = True,
         surface: bool =True
 ) -> pd.DataFrame:
+    """
+    data is assumed to be preprocessed:
+        - all features enumerated
+        - winner/loser -> to p1/p2
+        - mix players's position in each match
+        - sorted timewise: future to past matches.
+    """
 
+    df = data.copy()
 
+    if use_prev_stats:
+        prev_stats = single_prev_match_stats(df)
+
+    if use_elo:
+        elo = add_elo_feature(df)
+
+    if use_h2h:
+        h2h = h2h(df)
 
     if surface:
-        n=0
-    else:
-        n=1
+        #we use also surface related stats
 
     print(n)
+
 
 
