@@ -116,7 +116,9 @@ from feature_engineering import *
 
 This step adds:
 - previous-match statistics,
-- ELO ratings computed in a leakage-free way.
+- ELO ratings computed in a leakage-free way,
+- H2H statistics,
+- surface specific statistics.
 
 ------------------------------------------------------------
 
