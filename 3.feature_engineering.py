@@ -11,11 +11,35 @@ import pandas as pd
 
 
 ## COLLECTING PREVIOUS MATCH'S STATS FOR EACH PLAYER
-''' previous matche's stats '''
+PREV_STAT_COLS = [
+    "sets_ratio_enc",
+    "tie_breaks_enc",
+    "minutes",
+    "ace",
+    "df",
+    "svpt",
+    "1stIn",
+    "1stWon",
+    "2ndWon",
+    "SvGms",
+    "bpSaved",
+    "bpFaced",
+]
+
+
+
+
+''' PREVIOUS MATCH STATS '''
 def single_prev_match_stats(data):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches)
+
+    returns:
+    df with columns:
+        p1_single_prev_sets_ratio_enc, p1_single_prev_tie_breaks_enc, ..., p1_single_prev_bpFaced, p2_single_prev_sets_ratio_enc, p2_single_prev_tie_breaks_enc,...
+    and len(df) = len(data)
+    (i.e. for each CURRENT match, we take the stats of each player's immediate preceding match (if it exists))
     """
     df = data.copy()
 
@@ -23,7 +47,7 @@ def single_prev_match_stats(data):
 
     prev_stats_dict = {}
 
-    prev_stats_pre = np.empty((n, 2), dtype=object)
+    out_df = pd.DataFrame(index=df.index)
 
 
     for i in range(n):
@@ -34,40 +58,126 @@ def single_prev_match_stats(data):
         p1 = row.p1_id
         p2 = row.p2_id
 
-        prev_stats_pre[j, 0] = prev_stats_dict.get(p1, np.nan)
-        prev_stats_pre[j, 1] = prev_stats_dict.get(p2, np.nan)
+        # prev_stats_pre[j, 0] = prev_stats_dict.get(p1, np.nan)
+        # prev_stats_pre[j, 1] = prev_stats_dict.get(p2, np.nan)
+        for player, prefix in [(p1, "p1"), (p2, "p2")]:
+            prev = prev_stats_dict.get(player)
 
-        prev_stats_dict[p1] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p1_ace', 'p1_df',
-                                    'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
-                                    'p1_bpSaved', 'p1_bpFaced']]
+            for stat in PREV_STAT_COLS:
+                col = f"{prefix}_single_prev_{stat}"
+                # NaN if no previous stats
+                out_df.loc[j, col] = np.nan if prev is None else prev[stat]
 
-        prev_stats_dict[p2] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p2_ace', 'p2_df',
-                                    'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
-                                    'p2_bpSaved', 'p2_bpFaced']]
+            out_df.loc[j,f"{prefix}_single_prev_position"] = np.nan if prev is None else prev["position"]
+
+        # Store current match stats for future matches
+        prev_stats_dict[p1] = {
+            "sets_ratio_enc": row.sets_ratio_enc,
+            "tie_breaks_enc": row.tie_breaks_enc,
+            "minutes": row.minutes,
+            "ace": row.p1_ace,
+            "df": row.p1_df,
+            "svpt": row.p1_svpt,
+            "1stIn": row.p1_1stIn,
+            "1stWon": row.p1_1stWon,
+            "2ndWon": row.p1_2ndWon,
+            "SvGms": row.p1_SvGms,
+            "bpSaved": row.p1_bpSaved,
+            "bpFaced": row.p1_bpFaced,
+            "position": j
+        }
+
+        prev_stats_dict[p2] = {
+            "sets_ratio_enc": row.sets_ratio_enc,
+            "tie_breaks_enc": row.tie_breaks_enc,
+            "minutes": row.minutes,
+            "ace": row.p2_ace,
+            "df": row.p2_df,
+            "svpt": row.p2_svpt,
+            "1stIn": row.p2_1stIn,
+            "1stWon": row.p2_1stWon,
+            "2ndWon": row.p2_2ndWon,
+            "SvGms": row.p2_SvGms,
+            "bpSaved": row.p2_bpSaved,
+            "bpFaced": row.p2_bpFaced,
+            "position": j
+        }
+
+    return out_df
 
 
-    df_prev_stats = pd.DataFrame({
-        "p1_single_prev_stats": prev_stats_pre[:,0],
-        "p2_single_prev_stats": prev_stats_pre[:,1],
-    })
+#
+# ''' SURFACE PREVIOUS MATCH STATS '''
+# def single_prev_match_stats_surface(data):
+#     """
+#     dataset must be in chronological order: future -> past
+#     (not necessarily consecutive matches)
+#     """
+#     df = data.copy()
+#
+#     n = len(df)
+#
+#     prev_stats_dict_same_surface = {}
+#
+#     prev_stats_pre_same_surface = np.empty((n, 2), dtype=object)
+#
+#
+#     for i in range(n):
+#         j = n-i-1
+#
+#         row = df.iloc[j]
+#
+#         surface = row.surface
+#
+#         p1 = row.p1_id
+#         p2 = row.p2_id
+#
+#         prev_stats_pre_same_surface[j, 0] = prev_stats_dict_same_surface.get((p1,surface), np.nan)
+#         prev_stats_pre_same_surface[j, 1] = prev_stats_dict_same_surface.get((p2,surface), np.nan)
+#
+#         prev_stats_dict_same_surface[(p1,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p1_ace', 'p1_df',
+#                                                           'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
+#                                                           'p1_bpSaved', 'p1_bpFaced']]
+#
+#         prev_stats_dict_same_surface[(p2,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p2_ace', 'p2_df',
+#                                                           'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
+#                                                           'p2_bpSaved', 'p2_bpFaced']]
+#
+#         avg_stats.index = [
+#             f"{prefix}_av_{stat}_{prev_match_num}_matches"
+#             for stat in avg_stats.index
+#         ]
+#
+#     df_prev_stats_same_surface = pd.DataFrame({
+#         "p1_single_prev_stats_same_surface": prev_stats_pre_same_surface[:,0],
+#         "p2_single_prev_stats_same_surface": prev_stats_pre_same_surface[:,1],
+#     })
+#
+#
+#     return df_prev_stats_same_surface
 
 
-    return df_prev_stats
 
 
-''' Surface previous matche's stats '''
-def single_prev_match_stats_same_surface(data):
+''' SURFACE PREVIOUS MATCH STATS '''
+def single_prev_match_stats_surface(data):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches)
+
+    returns:
+    df with columns:
+        p1_single_prev_[SURFACE]_sets_ratio_enc, p1_single_prev_[SURFACE]_tie_breaks_enc, ..., p1_single_prev_[SURFACE]_bpFaced, p2_single_prev_[SURFACE]_sets_ratio_enc, p2_single_prev_[SURFACE]_tie_breaks_enc,...
+    and len(df) = len(data)
+    (i.e. for each CURRENT match, we take the stats of each player's immediate preceding match of the same surface as the current surface (if it exists))
     """
     df = data.copy()
 
     n = len(df)
 
-    prev_stats_dict_same_surface = {}
+    prev_stats_dict = {}
 
-    prev_stats_pre_same_surface = np.empty((n, 2), dtype=object)
+    out_df = pd.DataFrame(index=df.index)
 
 
     for i in range(n):
@@ -80,157 +190,148 @@ def single_prev_match_stats_same_surface(data):
         p1 = row.p1_id
         p2 = row.p2_id
 
-        prev_stats_pre_same_surface[j, 0] = prev_stats_dict_same_surface.get((p1,surface), np.nan)
-        prev_stats_pre_same_surface[j, 1] = prev_stats_dict_same_surface.get((p2,surface), np.nan)
+        # prev_stats_pre[j, 0] = prev_stats_dict.get(p1, np.nan)
+        # prev_stats_pre[j, 1] = prev_stats_dict.get(p2, np.nan)
+        for player, prefix in [(p1, "p1"), (p2, "p2")]:
+            prev = prev_stats_dict.get((player, surface))
 
-        prev_stats_dict_same_surface[(p1,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p1_ace', 'p1_df',
-                                                          'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
-                                                          'p1_bpSaved', 'p1_bpFaced']]
+            for stat in PREV_STAT_COLS:
+                col = f"{prefix}_single_prev_surface_{stat}"
+                # NaN if no previous stats
+                out_df.loc[j, col] = np.nan if prev is None else prev[stat]
 
-        prev_stats_dict_same_surface[(p2,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p2_ace', 'p2_df',
-                                                          'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
-                                                          'p2_bpSaved', 'p2_bpFaced']]
-
-
-    df_prev_stats_same_surface = pd.DataFrame({
-        "p1_single_prev_stats_same_surface": prev_stats_pre_same_surface[:,0],
-        "p2_single_prev_stats_same_surface": prev_stats_pre_same_surface[:,1],
-    })
+            out_df.loc[j,f"{prefix}_single_prev_surface_position"] = np.nan if prev is None else prev["position"]
 
 
-    return df_prev_stats_same_surface
+        # Store current match stats for future matches
+        prev_stats_dict[(p1, surface)] = {
+            "sets_ratio_enc": row.sets_ratio_enc,
+            "tie_breaks_enc": row.tie_breaks_enc,
+            "minutes": row.minutes,
+            "ace": row.p1_ace,
+            "df": row.p1_df,
+            "svpt": row.p1_svpt,
+            "1stIn": row.p1_1stIn,
+            "1stWon": row.p1_1stWon,
+            "2ndWon": row.p1_2ndWon,
+            "SvGms": row.p1_SvGms,
+            "bpSaved": row.p1_bpSaved,
+            "bpFaced": row.p1_bpFaced,
+            "position": j
+        }
+
+        prev_stats_dict[(p2, surface)] = {
+            "sets_ratio_enc": row.sets_ratio_enc,
+            "tie_breaks_enc": row.tie_breaks_enc,
+            "minutes": row.minutes,
+            "ace": row.p2_ace,
+            "df": row.p2_df,
+            "svpt": row.p2_svpt,
+            "1stIn": row.p2_1stIn,
+            "1stWon": row.p2_1stWon,
+            "2ndWon": row.p2_2ndWon,
+            "SvGms": row.p2_SvGms,
+            "bpSaved": row.p2_bpSaved,
+            "bpFaced": row.p2_bpFaced,
+            "position": j
+        }
+
+    return out_df
 
 
 
-''' avergae stat of n previous matches '''
+
+
+''' AVERAGE STATS OF n PREVIOUS MATCHES '''
 def avrg_stats_from_multiple_prev_matches(data, prev_match_num=5):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches)
-    """
 
+    returns:
+    df with columns:
+        p1_av_{n}_prev_sets_ratio_enc, p1_av_{n}_prev_tie_breaks_enc, ..., p1_av_{n}_prev_bpFaced, p2_av_{n}_prev_sets_ratio_enc, p2_av_{n}_prev_tie_breaks_enc,...
+    and len(df) = len(data)
+    (i.e. for each CURRENT match, we take the stats of each player's immediate n preceding matches (if they exist))
+    """
+    data = data.copy()
     prev_df = single_prev_match_stats(data)
     n = len(data)
 
-    rows_out = []
+    df_av_stats = pd.DataFrame(index=data.index)
 
     for i in range(n):
-        row_features = {}
 
-        for player_col, prefix in [
-            ("p1_single_prev_stats", "p1"),
-            ("p2_single_prev_stats", "p2"),
-        ]:
-            prev_matches = []
-            idx = i
+        row = data.iloc[i]
 
-            while len(prev_matches) < prev_match_num:
-                if idx < 0:
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        for player, prefix in [(p1, "p1"), (p2, "p2")]:
+            prev_matches = pd.DataFrame(columns=[f"{prefix}_av_{prev_match_num}_prev_{stat}" for stat in PREV_STAT_COLS])
+            current_pos = i
+            j=0
+            while j < prev_match_num:
+                prev_match_idx = prev_df.loc[current_pos, f"{prefix}_single_prev_position"]
+                if pd.isna(prev_match_idx):
                     break
+                for stat in PREV_STAT_COLS:
+                    single_col = f"{prefix}_single_prev_{stat}"
+                    col = f"{prefix}_av_{prev_match_num}_prev_{stat}"
+                    prev_matches.loc[j, col] = prev_df.loc[current_pos, single_col]
+                j += 1
+                current_pos = int(prev_match_idx)
 
-                stats = prev_df.iloc[idx][player_col]
+                df_av_stats.loc[i, prev_matches.columns] = prev_matches.mean()
 
-                if isinstance(stats, pd.Series):
-                    prev_matches.append(stats)
-
-                idx -= 1
-
-            if len(prev_matches) == 0:
-                # fill NaNs later once we know column names
-                row_features[prefix] = np.nan
-            else:
-                avg_stats = (
-                    pd.concat(prev_matches, axis=1)
-                      .mean(axis=1)
-                )
-
-                # rename columns
-                avg_stats.index = [
-                    f"{prefix}_av_{stat}_{prev_match_num}_matches"
-                    for stat in avg_stats.index
-                ]
-
-                row_features[prefix] = avg_stats
-
-        rows_out.append(row_features)
-
-    # --- build final DataFrame ---
-    df_out = pd.DataFrame(index=data.index)
-
-    for i, row in enumerate(rows_out):
-        for prefix in ["p1", "p2"]:
-            val = row[prefix]
-            if isinstance(val, pd.Series):
-                df_out.loc[i, val.index] = val.values
-
-    return df_out
+    return df_av_stats
 
     
 
 
-''' Surface avergae stat of n previous matches '''
-def avrg_stats_from_multiple_prev_matches(data, prev_match_num=5):
+''' SURFACE AVERAGE STATS OF n PREVIOUS MATCHES '''
+def avrg_stats_from_multiple_prev_matches_surface(data, prev_match_num=5):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches)
+
+    returns:
+    df with columns:
+        p1_avrg_{n}_prev_[SURFACE]_sets_ratio_enc, p1_avrg_{n}_prev_[SURFACE]_tie_breaks_enc, ..., p1_avrg_{n}_prev_[SURFACE]_bpFaced, p2_avrg_{n}_prev_[SURFACE]_sets_ratio_enc, p2_avrg_{n}_prev_[SURFACE]_tie_breaks_enc,...
+    and len(df) = len(data)
+    (i.e. for each CURRENT match, we take the stats of each player's immediate preceding matches of the same surface as the current surface (if they exist))
     """
     data = data.copy()
-    
-    surface_prev_df = single_prev_match_stats_same_surface(data)
+    prev_df = single_prev_match_stats_surface(data)
     n = len(data)
 
-    rows_out = []
+    df_av_stats_surface = pd.DataFrame(index=data.index)
 
     for i in range(n):
-        row_features = {}
 
-        for player_col, prefix in [
-            ("p1_single_prev_stats_same_surface", "p1"),
-            ("p2_single_prev_stats_same_surface", "p2"),
-        ]:
-            prev_matches = []
-            idx = i
+        row = data.iloc[i]
 
-            while len(prev_matches) < prev_match_num:
-                if idx < 0:
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        for player, prefix in [(p1, "p1"), (p2, "p2")]:
+            prev_matches = pd.DataFrame(columns=[f"{prefix}_av_{prev_match_num}_prev_surface_{stat}" for stat in PREV_STAT_COLS])
+            current_pos = i
+            j=0
+            while j < prev_match_num:
+                prev_match_idx = prev_df.loc[current_pos, f"{prefix}_single_prev_surface_position"]
+                if pd.isna(prev_match_idx):
                     break
+                for stat in PREV_STAT_COLS:
+                    single_col = f"{prefix}_single_prev_surface_{stat}"
+                    col = f"{prefix}_av_{prev_match_num}_prev_surface_{stat}"
+                    prev_matches.loc[j, col] = prev_df.loc[current_pos, single_col]
+                j += 1
+                current_pos = int(prev_match_idx)
 
-                stats = surface_prev_df.iloc[idx][player_col]
+                df_av_stats_surface.loc[i, prev_matches.columns] = prev_matches.mean()
 
-                if isinstance(stats, pd.Series):
-                    prev_matches.append(stats)
-
-                idx -= 1
-
-            if len(prev_matches) == 0:
-                # fill NaNs later once we know column names
-                row_features[prefix] = np.nan
-            else:
-                avg_stats = (
-                    pd.concat(prev_matches, axis=1)
-                      .mean(axis=1)
-                )
-
-                # rename columns
-                avg_stats.index = [
-                    f"{prefix}_av_{stat}_{prev_match_num}_matches"
-                    for stat in avg_stats.index
-                ]
-
-                row_features[prefix] = avg_stats
-
-        rows_out.append(row_features)
-
-    # --- build final DataFrame ---
-    df_out = pd.DataFrame(index=data.index)
-
-    for i, row in enumerate(rows_out):
-        for prefix in ["p1", "p2"]:
-            val = row[prefix]
-            if isinstance(val, pd.Series):
-                df_out.loc[i, val.index] = val.values
-
-    return df_out
+    return df_av_stats_surface
 
 
 
@@ -242,92 +343,104 @@ def overall_sats(data):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches)
+
+    returns:
+    df with columns:
+        p1_overall_sets_ratio_enc, p1_overall_tie_breaks_enc, ..., p1_overall__bpFaced, p2_overall_sets_ratio_enc, p2_overall_tie_breaks_enc,...
+    and len(df) = len(data)
+    (i.e. for each CURRENT match, we take the stats of each player's ALL preceding matches (if they exist))
     """
-    prev_stats_dict = single_prev_match_stats(data)
     data = data.copy()
+    prev_df = single_prev_match_stats(data)
+    n = len(data)
 
-    overall_stats = {}
-    for indx, row in data.iterrows():
-        for player in [row["p1_id"], row["p2_id"]]:
+    df_overall_stats = pd.DataFrame(index=data.index)
 
-            prev_matches_lst_for_each_player = []
-            prev_matches_found = 0
-            key = f"prev_p_{player}__for_row{indx}"
+    for i in range(n):
 
-            while key in prev_stats_dict:
-                idx_2, prev_stats = prev_stats_dict[key]
-                idx_2 = int(idx_2)
+        row = data.iloc[i]
 
-                if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        for player, prefix in [(p1, "p1"), (p2, "p2")]:
+            prev_matches = pd.DataFrame()
+            current_pos = i
+            j=0
+            while True:
+                prev_match_idx = prev_df.loc[current_pos, f"{prefix}_single_prev_position"]
+                if pd.isna(prev_match_idx):
                     break
+                for stat in PREV_STAT_COLS:
+                    single_col = f"{prefix}_single_prev_{stat}"
+                    col = f"{prefix}_overall_{stat}"
+                    prev_matches.loc[j, col] = prev_df.loc[current_pos, single_col]
+                j += 1
+                current_pos = int(prev_match_idx)
 
-                prev_matches_lst_for_each_player.append(prev_stats)
-                prev_matches_found += 1
-                key = f"prev_p_{player}__for_row{int(idx_2)}"
+                df_overall_stats.loc[i, prev_matches.columns] = prev_matches.mean()
 
-            if prev_matches_found == 0:
-                overall_stats[f"prev_p_{player}__for_row{indx}"] = np.nan
-            else:
-                overall_stats[f"prev_p_{player}__for_row{indx}"] = (
-                    pd.concat(prev_matches_lst_for_each_player, axis=1)
-                      .mean(axis=1)
-                )
-
-    return overall_stats
+    return df_overall_stats
 
 ''' OVERALL PLAYER SURFACE STATS '''
-def overall_sats_same_surface(data):
+def overall_sats_surface(data):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches)
+
+    returns:
+    df with columns:
+        p1_overall_[SURFACE]_sets_ratio_enc, p1_overall_[SURFACE]_tie_breaks_enc, ..., p1_overall_[SURFACE]_bpFaced, p2_overall_[SURFACE]_sets_ratio_enc, p2_overall_[SURFACE]_tie_breaks_enc,...
+    and len(df) = len(data)
+    (i.e. for each CURRENT match, we take the stats of each player's ALL preceding matches of the same surface as the current surface (if they exist))
     """
-    prev_stats_dict_same_surface = single_prev_match_stats_same_surface(data)
     data = data.copy()
+    prev_df = single_prev_match_stats_surface(data)
+    n = len(data)
 
-    overall_stats_same_surface = {}
-    for indx, row in data.iterrows():
-        for player in [row["p1_id"], row["p2_id"]]:
+    df_overall_stats_surface = pd.DataFrame(index=data.index)
 
-            prev_matches_lst_for_each_player = []
-            prev_matches_found = 0
-            key = f"prev_p_{player}__for_row{indx}"
+    for i in range(n):
 
-            while key in prev_stats_dict_same_surface:
-                idx_2, prev_stats = prev_stats_dict_same_surface[key]
-                idx_2 = int(idx_2)
+        row = data.iloc[i]
 
-                if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
+        p1 = row.p1_id
+        p2 = row.p2_id
+
+        for player, prefix in [(p1, "p1"), (p2, "p2")]:
+            prev_matches = pd.DataFrame()
+            current_pos = i
+            j=0
+            while True:
+                prev_match_idx = prev_df.loc[current_pos, f"{prefix}_single_prev_surface_position"]
+                if pd.isna(prev_match_idx):
                     break
+                for stat in PREV_STAT_COLS:
+                    single_col = f"{prefix}_single_prev_surface_{stat}"
+                    col = f"{prefix}_overall_surface_{stat}"
+                    prev_matches.loc[j, col] = prev_df.loc[current_pos, single_col]
+                j += 1
+                current_pos = int(prev_match_idx)
 
-                prev_matches_lst_for_each_player.append(prev_stats)
-                prev_matches_found += 1
-                key = f"prev_p_{player}__for_row{int(idx_2)}"
+                df_overall_stats_surface.loc[i, prev_matches.columns] = prev_matches.mean()
 
-            if prev_matches_found == 0:
-                overall_stats_same_surface[f"prev_p_{player}__for_row{indx}"] = np.nan
-            else:
-                overall_stats_same_surface[f"prev_p_{player}__for_row{indx}"] = (
-                    pd.concat(prev_matches_lst_for_each_player, axis=1)
-                      .mean(axis=1)
-                )
-
-    return overall_stats_same_surface
+    return df_overall_stats_surface
 
 
 
 
-''' CONSECUTIVE MATCHES '''
-# possibly FATIGUE
-#implementation: matches in the last 7, 15 and 30 days
-#                   put in the minutes and/or sets they played
-
-'''MOMENTUM'''
-#consecutive wins or win ratio of n last matches
-#implementation: win ratio
-
-''' DAYS SINCE LAST MATCH'''
-# a bit confusing stat: possibly INJURY but also could be long break -> refreshed  and/or  period of not many
-#                       tournaments (somewhere after the US open)
+# ''' CONSECUTIVE MATCHES '''
+# # possibly FATIGUE
+# #implementation: matches in the last 7, 15 and 30 days
+# #                   put in the minutes and/or sets they played
+#
+# '''MOMENTUM'''
+# #consecutive wins or win ratio of n last matches
+# #implementation: win ratio
+#
+# ''' DAYS SINCE LAST MATCH'''
+# # a bit confusing stat: possibly INJURY but also could be long break -> refreshed  and/or  period of not many
+# #                       tournaments (somewhere after the US open)
 
 
 
@@ -446,7 +559,7 @@ def h2h_surface(data, labels):
 
 
 ''' ELO '''
-def add_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
+def elo(dataset, y,  initial_elo=1500, k=32, scale=400):
     """
     dataset must be in chronological order: future -> past
     (not necessarily consecutive matches).
@@ -507,7 +620,7 @@ def add_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
 
 
 ''' SURFACE ELO '''
-def add_surface_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
+def elo_surface(dataset, y,  initial_elo=1500, k=32, scale=400):
     """
     dataset must be in chronological order (future -> past)
     (not necessarily consecutive matches).
