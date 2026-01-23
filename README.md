@@ -1,24 +1,66 @@
 # Tennis Match Outcome Predictor
 
-This project is an end-to-end machine learning pipeline for predicting the outcome of professional tennis matches using historical ATP data.
-It is designed as a showcase project for applying machine learning methods to a real-world, noisy, time-dependent dataset.
+## Project Overview
 
-The focus is on:
-- clean data processing pipelines,
-- leakage-free feature engineering,
-- time-aware evaluation,
-- and interpretable tree-based models.
+This project is an end-to-end machine learning pipeline for predicting the outcome of professional tennis matches using historical ATP data.  
+It is designed as a showcase project for applying machine learning methods to a real-world, noisy, and time-dependent dataset, following the structure of a **quantitative sports prediction system**.
 
-Current models include:
-- Decision Trees
-- Random Forests
-- XGBoost
+Rather than treating match prediction as a simple classification problem, the project focuses on:
+- Historical performance modeling  
+- Dynamic rating systems (Elo and surface-Elo)  
+- Head-to-Head dynamics  
+- Time-aware validation  
+- Strict control of data leakage  
 
-with different feature configurations:
-- baseline (no historical performance features),
-- previous-match statistics,
-- ELO ratings,
-- and combinations of both.
+The emphasis is on:
+- Clean and reproducible data processing pipelines  
+- Leakage-free feature engineering  
+- Time-aware model evaluation  
+- Interpretable tree-based models  
+  - Current models include:
+    - Decision Trees  
+    - Random Forests  
+    - XGBoost 
+
+Tested under different feature configurations:
+- Baseline (no historical performance features)  
+- Previous-match statistics  
+- Elo ratings  
+- Combinations of all the above  
+
+---
+
+## Design Principles
+
+This project is designed as a **quantitative sports prediction system**, not a toy machine-learning example.  
+It explicitly enforces the following principles:
+
+- **Temporal causality**  
+  All features are computed using only information that was available before each match was played.  
+  The dataset is ordered chronologically, and all historical statistics (previous match stats, rolling averages, Elo, H2H) are updated only after a match has occurred.
+
+- **Feature leakage prevention**  
+  No information derived from the current match outcome (such as final score or winner-dependent statistics) is used to build predictive features.  
+  This prevents the model from learning from future information and ensures that evaluation metrics reflect true predictive performance.
+
+- **Symmetry between players**  
+  The model does not assume that “player 1 is the winner.”  
+  Player positions are randomly swapped during preprocessing, and the target variable is adjusted accordingly, preventing positional bias.
+
+- **Realistic evaluation protocol**  
+  Time-aware cross-validation is used, where training always occurs on older matches and testing is performed on newer matches.  
+  This mirrors how a real-world prediction system would operate.
+
+- **Performance modeling instead of raw memorization**  
+  Player form is represented using:
+  - Previous match statistics  
+  - Rolling averages over recent matches  
+  - Surface-specific performance  
+  - Elo and surface-Elo ratings  
+  - Head-to-Head dynamics  
+
+This design ensures that the project behaves like a real quantitative sports analytics system rather than a static machine learning experiment.
+
 
 ------------------------------------------------------------
 
