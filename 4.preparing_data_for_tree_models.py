@@ -136,6 +136,15 @@ def build_features_for_trees(
     df = data.copy()
     df_features = pd.DataFrame(index=df.index)
 
+    # --- CURRENT (NON-HISTORICAL) FEATURES ---
+    for (c1, c2) in CURRENT_NUMERIC_DIFFS:
+        if c1 in df.columns and c2 in df.columns:
+            df_features[f"{c1}_minus_{c2}"] = df[c1] - df[c2]
+
+    for col in TOURN_FEATURES:
+        if col in df.columns:
+            df_features[col] = df[col]
+
     # --- SINGLE PREVIOUS MATCH STATS ---
     if use_prev_stats:
         prev_stats_df = single_prev_match_stats(df)
@@ -206,6 +215,7 @@ def build_features_for_trees(
         return df_features
     else:
         raise ValueError("Feature dataframe length mismatch!")
+
 
 
 
