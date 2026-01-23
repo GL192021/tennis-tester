@@ -210,6 +210,9 @@ Main dependencies:
 - scikit-learn
 - xgboost
 
+Python version:
+- Python 3.10 or higher
+
 ------------------------------------------------------------
 
 
