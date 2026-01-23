@@ -118,171 +118,92 @@ ELO_FEATURES = ["elo_p1_pre", "elo_p2_pre", "elo_diff", "elo_p1_win_prob"]
 H2H_FEATURES = ["H2H"]
 
 
-# def build_features_for_trees(
-#     data: pd.DataFrame,
-#     y,
-#     use_prev_stats: bool = True,
-#     use_av_prev_stats: bool = False,
-#     n_prev_matches_list: list[int] | None = None,
-#     use_overall_stats: bool = False,
-#     use_elo: bool = True,
-#     use_h2h: bool = True,
-#     surface: bool = True
-# ) -> pd.DataFrame:
-#     """
-#     Returns a dataframe with all player stats differences ready for tree-based models.
-#     Each feature is the difference between p1 and p2 stats.
-#     """
-#     df = data.copy()
-#     df_features = df.copy()
-#
-#     # --- SINGLE PREVIOUS MATCH STATS ---
-#     if use_prev_stats:
-#         prev_stats_df = single_prev_match_stats(df)
-#         for stat in PREV_STAT_COLS:
-#             diff_col = f"single_prev_{stat}_diff"
-#             df_features[diff_col] = prev_stats_df[f"p1_single_prev_{stat}"] - prev_stats_df[f"p2_single_prev_{stat}"]
-#
-#     # --- ELO ---
-#     if use_elo:
-#         elo_df = elo(df, y)
-#         df_features["elo_diff"] = elo_df["elo_diff"]
-#
-#     # --- H2H ---
-#     if use_h2h:
-#         h2h_df = h2h(df, y)
-#         df_features["h2h_diff"] = h2h_df["h2h_p1_p2_pre"] - h2h_df["h2h_p2_p1_pre"]
-#
-#     # --- OVERALL STATS ---
-#     if use_overall_stats:
-#         overall_df = overall_sats(df)
-#         for stat in PREV_STAT_COLS:
-#             diff_col = f"overall_{stat}_diff"
-#             df_features[diff_col] = overall_df[f"p1_overall_{stat}"] - overall_df[f"p2_overall_{stat}"]
-#
-#     # --- AVERAGE PREVIOUS MATCHES ---
-#     if use_av_prev_stats and n_prev_matches_list is not None:
-#         for n in n_prev_matches_list:
-#             avrg_df = avrg_stats_from_multiple_prev_matches(df, prev_match_num=n)
-#             for stat in PREV_STAT_COLS:
-#                 diff_col = f"av_{n}_{stat}_diff"
-#                 df_features[diff_col] = avrg_df[f"p1_av_{n}_prev_{stat}"] - avrg_df[f"p2_av_{n}_prev_{stat}"]
-#
-#     # --- SURFACE STATS ---
-#     if surface:
-#         if use_prev_stats:
-#             prev_surf_df = single_prev_match_stats_surface(df)
-#             for stat in PREV_STAT_COLS:
-#                 diff_col = f"single_prev_surface_{stat}_diff"
-#                 df_features[diff_col] = prev_surf_df[f"p1_single_prev_surface_{stat}"] - prev_surf_df[f"p2_single_prev_surface_{stat}"]
-#
-#         if use_elo:
-#             surf_elo_df = elo_surface(df, y)
-#             df_features["surface_elo_diff"] = surf_elo_df["surface_elo_diff"]
-#
-#         if use_h2h:
-#             h2h_surf_df = h2h_surface(df, y)
-#             df_features["h2h_surface_diff"] = h2h_surf_df["h2h_p1_p2_pre_surface"] - h2h_surf_df["h2h_p2_p1_pre_surface"]
-#
-#         if use_overall_stats:
-#             overall_surf_df = overall_sats_surface(df)
-#             for stat in PREV_STAT_COLS:
-#                 diff_col = f"overall_surface_{stat}_diff"
-#                 df_features[diff_col] = overall_surf_df[f"p1_overall_surface_{stat}"] - overall_surf_df[f"p2_overall_surface_{stat}"]
-#
-#         if use_av_prev_stats and n_prev_matches_list is not None:
-#             for n in n_prev_matches_list:
-#                 avrg_surf_df = avrg_stats_from_multiple_prev_matches_surface(df, prev_match_num=n)
-#                 for stat in PREV_STAT_COLS:
-#                     diff_col = f"av_{n}_surface_{stat}_diff"
-#                     df_features[diff_col] = avrg_surf_df[f"p1_av_{n}_prev_surface_{stat}"] - avrg_surf_df[f"p2_av_{n}_prev_surface_{stat}"]
-#
-#     # Final check
-#     if len(df_features) == len(df):
-#         return df_features
-#     else:
-#         raise ValueError("Feature dataframe length mismatch!")
-#======================= MUCH MUCH CLEANER VERSION THAN ABOVE: =================================================
 def build_features_for_trees(
-        data: pd.DataFrame,
-        y,
-        use_prev_stats: bool = True,
-        use_av_prev_stats: bool = False,
-        n_prev_matches_list: list[int] | None = None,
-        use_overall_stats: bool = False,
-        use_elo: bool = True,
-        use_h2h: bool = True,
-        surface: bool = True
+    data: pd.DataFrame,
+    y,
+    use_prev_stats: bool = True,
+    use_av_prev_stats: bool = False,
+    n_prev_matches_list: list[int] | None = None,
+    use_overall_stats: bool = False,
+    use_elo: bool = True,
+    use_h2h: bool = True,
+    surface: bool = True
 ) -> pd.DataFrame:
     """
-    Build features for tree models:
-    - Computes differences between player 1 and player 2 stats
-    - Can include previous match stats, averages of previous matches,
-      overall stats, ELO, H2H, and surface-specific stats
+    Returns a dataframe with all player stats differences ready for tree-based models.
+    Each feature is the difference between p1 and p2 stats.
     """
     df = data.copy()
-    df_features = df.copy()
+    df_features = pd.DataFrame(index=df.index)
 
-    # ---------------- Normal stats ----------------
+    # --- SINGLE PREVIOUS MATCH STATS ---
     if use_prev_stats:
-        prev_stats = single_prev_match_stats(df)
-        p1_prev_stats = prev_stats.filter(like="p1_single_prev_")
-        p2_prev_stats = prev_stats.filter(like="p2_single_prev_")
-        df_features["single_prev_diff"] = (p1_prev_stats - p2_prev_stats).sum(axis=1)
+        prev_stats_df = single_prev_match_stats(df)
+        for stat in PREV_STAT_COLS:
+            diff_col = f"single_prev_{stat}_diff"
+            df_features[diff_col] = prev_stats_df[f"p1_single_prev_{stat}"] - prev_stats_df[f"p2_single_prev_{stat}"]
 
+    # --- ELO ---
     if use_elo:
-        elo_feature = elo(df, y)
-        df_features["elo_diff"] = elo_feature["elo_diff"]
-        df_features["elo_p1_win_prob"] = elo_feature["elo_p1_win_prob"]
+        elo_df = elo(df, y)
+        df_features["elo_diff"] = elo_df["elo_diff"]
 
+    # --- H2H ---
     if use_h2h:
-        h2h_feature = h2h(df, y)
-        df_features["h2h_diff"] = h2h_feature["h2h_p1_p2_pre"]
+        h2h_df = h2h(df, y)
+        df_features["h2h_diff"] = h2h_df["h2h_p1_p2_pre"] - h2h_df["h2h_p2_p1_pre"]
 
+    # --- OVERALL STATS ---
     if use_overall_stats:
-        overall_stats = overall_sats(df)
-        p1_overall = overall_stats.filter(like="p1_overall_")
-        p2_overall = overall_stats.filter(like="p2_overall_")
-        df_features["overall_diff"] = (p1_overall - p2_overall).sum(axis=1)
+        overall_df = overall_sats(df)
+        for stat in PREV_STAT_COLS:
+            diff_col = f"overall_{stat}_diff"
+            df_features[diff_col] = overall_df[f"p1_overall_{stat}"] - overall_df[f"p2_overall_{stat}"]
 
-    if use_av_prev_stats and n_prev_matches_list:
+    # --- AVERAGE PREVIOUS MATCHES ---
+    if use_av_prev_stats and n_prev_matches_list is not None:
         for n in n_prev_matches_list:
-            av_stats = avrg_stats_from_multiple_prev_matches(df, prev_match_num=n)
-            p1_av = av_stats.filter(like=f"p1_av_{n}_prev_")
-            p2_av = av_stats.filter(like=f"p2_av_{n}_prev_")
-            df_features[f"av_{n}_diff"] = (p1_av - p2_av).sum(axis=1)
+            avrg_df = avrg_stats_from_multiple_prev_matches(df, prev_match_num=n)
+            for stat in PREV_STAT_COLS:
+                diff_col = f"av_{n}_{stat}_diff"
+                df_features[diff_col] = avrg_df[f"p1_av_{n}_prev_{stat}"] - avrg_df[f"p2_av_{n}_prev_{stat}"]
 
-    # ---------------- Surface stats ----------------
+    # --- SURFACE STATS ---
     if surface:
         if use_prev_stats:
-            prev_stats_surf = single_prev_match_stats_surface(df)
-            p1_prev_surf = prev_stats_surf.filter(like="p1_single_prev_surface_")
-            p2_prev_surf = prev_stats_surf.filter(like="p2_single_prev_surface_")
-            df_features["single_prev_surface_diff"] = (p1_prev_surf - p2_prev_surf).sum(axis=1)
+            prev_surf_df = single_prev_match_stats_surface(df)
+            for stat in PREV_STAT_COLS:
+                diff_col = f"single_prev_surface_{stat}_diff"
+                df_features[diff_col] = prev_surf_df[f"p1_single_prev_surface_{stat}"] - prev_surf_df[f"p2_single_prev_surface_{stat}"]
 
         if use_elo:
-            elo_surf = elo_surface(df, y)
-            df_features["surface_elo_diff"] = elo_surf["surface_elo_diff"]
-            df_features["surface_elo_p1_win_prob"] = elo_surf["surface_elo_p1_win_prob"]
+            surf_elo_df = elo_surface(df, y)
+            df_features["surface_elo_diff"] = surf_elo_df["surface_elo_diff"]
 
         if use_h2h:
-            h2h_surf = h2h_surface(df, y)
-            df_features["h2h_surface_diff"] = h2h_surf["h2h_p1_p2_pre_surface"]
+            h2h_surf_df = h2h_surface(df, y)
+            df_features["h2h_surface_diff"] = h2h_surf_df["h2h_p1_p2_pre_surface"] - h2h_surf_df["h2h_p2_p1_pre_surface"]
 
         if use_overall_stats:
-            overall_surf = overall_sats_surface(df)
-            p1_overall_surf = overall_surf.filter(like="p1_overall_surface_")
-            p2_overall_surf = overall_surf.filter(like="p2_overall_surface_")
-            df_features["overall_surface_diff"] = (p1_overall_surf - p2_overall_surf).sum(axis=1)
+            overall_surf_df = overall_sats_surface(df)
+            for stat in PREV_STAT_COLS:
+                diff_col = f"overall_surface_{stat}_diff"
+                df_features[diff_col] = overall_surf_df[f"p1_overall_surface_{stat}"] - overall_surf_df[f"p2_overall_surface_{stat}"]
 
-        if use_av_prev_stats and n_prev_matches_list:
+        if use_av_prev_stats and n_prev_matches_list is not None:
             for n in n_prev_matches_list:
-                av_surf = avrg_stats_from_multiple_prev_matches_surface(df, prev_match_num=n)
-                p1_av_surf = av_surf.filter(like=f"p1_av_{n}_prev_surface_")
-                p2_av_surf = av_surf.filter(like=f"p2_av_{n}_prev_surface_")
-                df_features[f"av_{n}_surface_diff"] = (p1_av_surf - p2_av_surf).sum(axis=1)
+                avrg_surf_df = avrg_stats_from_multiple_prev_matches_surface(df, prev_match_num=n)
+                for stat in PREV_STAT_COLS:
+                    diff_col = f"av_{n}_surface_{stat}_diff"
+                    df_features[diff_col] = avrg_surf_df[f"p1_av_{n}_prev_surface_{stat}"] - avrg_surf_df[f"p2_av_{n}_prev_surface_{stat}"]
 
-    return df_features
+    # Final check
+    if len(df_features) == len(df):
+        return df_features
+    else:
+        raise ValueError("Feature dataframe length mismatch!")
+
+
 
 
 
