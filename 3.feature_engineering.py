@@ -11,10 +11,11 @@ import pandas as pd
 
 
 ## COLLECTING PREVIOUS MATCH'S STATS FOR EACH PLAYER
-
+''' previous matche's stats '''
 def single_prev_match_stats(data):
     """
-    dataset must be in chronological order (future -> past)
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches)
     """
     df = data.copy()
 
@@ -36,13 +37,13 @@ def single_prev_match_stats(data):
         prev_stats_pre[j, 0] = prev_stats_dict.get(p1, np.nan)
         prev_stats_pre[j, 1] = prev_stats_dict.get(p2, np.nan)
 
-        prev_stats_dict[p1] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p1_hand_enc', 'p1_ioc_enc', 'p1_entry_enc', 'p1_ace', 'p1_df',
-                                                                         'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
-                                                                         'p1_bpSaved', 'p1_bpFaced']]
+        prev_stats_dict[p1] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p1_ace', 'p1_df',
+                                    'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
+                                    'p1_bpSaved', 'p1_bpFaced']]
 
-        prev_stats_dict[p2] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p2_hand_enc', 'p2_ioc_enc', 'p2_entry_enc', 'p2_ace', 'p2_df',
-                                                                         'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
-                                                                         'p2_bpSaved', 'p2_bpFaced']]
+        prev_stats_dict[p2] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p2_ace', 'p2_df',
+                                    'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
+                                    'p2_bpSaved', 'p2_bpFaced']]
 
 
     df_prev_stats = pd.DataFrame({
@@ -54,10 +55,11 @@ def single_prev_match_stats(data):
     return df_prev_stats
 
 
-
-def single_prev_match_stats_sam_surface(data):
+''' Surface previous matche's stats '''
+def single_prev_match_stats_same_surface(data):
     """
-    dataset must be in chronological order (future -> past)
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches)
     """
     df = data.copy()
 
@@ -81,13 +83,13 @@ def single_prev_match_stats_sam_surface(data):
         prev_stats_pre_same_surface[j, 0] = prev_stats_dict_same_surface.get((p1,surface), np.nan)
         prev_stats_pre_same_surface[j, 1] = prev_stats_dict_same_surface.get((p2,surface), np.nan)
 
-        prev_stats_dict_same_surface[(p1,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p1_hand_enc', 'p1_ioc_enc', 'p1_entry_enc', 'p1_ace', 'p1_df',
-                                                                         'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
-                                                                         'p1_bpSaved', 'p1_bpFaced']]
+        prev_stats_dict_same_surface[(p1,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p1_ace', 'p1_df',
+                                                          'p1_svpt', 'p1_1stIn', 'p1_1stWon', 'p1_2ndWon', 'p1_SvGms',
+                                                          'p1_bpSaved', 'p1_bpFaced']]
 
-        prev_stats_dict_same_surface[(p2,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'best_of', 'round_enc', 'minutes', 'p2_hand_enc', 'p2_ioc_enc', 'p2_entry_enc', 'p2_ace', 'p2_df',
-                                                                         'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
-                                                                         'p2_bpSaved', 'p2_bpFaced']]
+        prev_stats_dict_same_surface[(p2,surface)] = row[['sets_ratio_enc', 'tie_breaks_enc', 'minutes', 'p2_ace', 'p2_df',
+                                                          'p2_svpt', 'p2_1stIn', 'p2_1stWon', 'p2_2ndWon', 'p2_SvGms',
+                                                          'p2_bpSaved', 'p2_bpFaced']]
 
 
     df_prev_stats_same_surface = pd.DataFrame({
@@ -100,88 +102,147 @@ def single_prev_match_stats_sam_surface(data):
 
 
 
+''' avergae stat of n previous matches '''
+def avrg_stats_from_multiple_prev_matches(data, prev_match_num=5):
+    """
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches)
+    """
+
+    prev_df = single_prev_match_stats(data)
+    n = len(data)
+
+    rows_out = []
+
+    for i in range(n):
+        row_features = {}
+
+        for player_col, prefix in [
+            ("p1_single_prev_stats", "p1"),
+            ("p2_single_prev_stats", "p2"),
+        ]:
+            prev_matches = []
+            idx = i
+
+            while len(prev_matches) < prev_match_num:
+                if idx < 0:
+                    break
+
+                stats = prev_df.iloc[idx][player_col]
+
+                if isinstance(stats, pd.Series):
+                    prev_matches.append(stats)
+
+                idx -= 1
+
+            if len(prev_matches) == 0:
+                # fill NaNs later once we know column names
+                row_features[prefix] = np.nan
+            else:
+                avg_stats = (
+                    pd.concat(prev_matches, axis=1)
+                      .mean(axis=1)
+                )
+
+                # rename columns
+                avg_stats.index = [
+                    f"{prefix}_av_{stat}_{prev_match_num}_matches"
+                    for stat in avg_stats.index
+                ]
+
+                row_features[prefix] = avg_stats
+
+        rows_out.append(row_features)
+
+    # --- build final DataFrame ---
+    df_out = pd.DataFrame(index=data.index)
+
+    for i, row in enumerate(rows_out):
+        for prefix in ["p1", "p2"]:
+            val = row[prefix]
+            if isinstance(val, pd.Series):
+                df_out.loc[i, val.index] = val.values
+
+    return df_out
+
+    
 
 
-def avrg_stats_from_multiple_prev_matches(data, prev_match_num = 5):
-    prev_stats_dict = single_prev_match_stats(data)
-
+''' Surface avergae stat of n previous matches '''
+def avrg_stats_from_multiple_prev_matches(data, prev_match_num=5):
+    """
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches)
+    """
     data = data.copy()
-    data_2 = data
+    
+    surface_prev_df = single_prev_match_stats_same_surface(data)
+    n = len(data)
 
-    avrg_prev_stats_dict = {}
-    for indx, row in data_2.iloc[:].iterrows():
-        for player in [row["p1_id"], row["p2_id"]]:
-            prev_matches_lst_for_each_player = []
-            prev_matches_found = 0
-            key = f"prev_p_{player}__for_row{indx}"
+    rows_out = []
 
-            while prev_matches_found < prev_match_num:
-                val = prev_stats_dict[key]
-                idx_2 = val[0]
-                prev_stats = val[1]
+    for i in range(n):
+        row_features = {}
 
-                if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
+        for player_col, prefix in [
+            ("p1_single_prev_stats_same_surface", "p1"),
+            ("p2_single_prev_stats_same_surface", "p2"),
+        ]:
+            prev_matches = []
+            idx = i
+
+            while len(prev_matches) < prev_match_num:
+                if idx < 0:
                     break
 
-                idx_2 = int(idx_2)
-                prev_matches_lst_for_each_player.append(prev_stats)
-                prev_matches_found += 1
-                key = f"prev_p_{player}__for_row{idx_2}"
+                stats = surface_prev_df.iloc[idx][player_col]
 
-            if prev_matches_found == 0:
-                avrg_prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = np.nan
+                if isinstance(stats, pd.Series):
+                    prev_matches.append(stats)
+
+                idx -= 1
+
+            if len(prev_matches) == 0:
+                # fill NaNs later once we know column names
+                row_features[prefix] = np.nan
             else:
-                avrg_prev_stats_dict[f"prev_p_{player}__for_row{indx}"] = (
-                    pd.concat(prev_matches_lst_for_each_player, axis=1)
+                avg_stats = (
+                    pd.concat(prev_matches, axis=1)
                       .mean(axis=1)
                 )
 
-    return avrg_prev_stats_dict
+                # rename columns
+                avg_stats.index = [
+                    f"{prefix}_av_{stat}_{prev_match_num}_matches"
+                    for stat in avg_stats.index
+                ]
+
+                row_features[prefix] = avg_stats
+
+        rows_out.append(row_features)
+
+    # --- build final DataFrame ---
+    df_out = pd.DataFrame(index=data.index)
+
+    for i, row in enumerate(rows_out):
+        for prefix in ["p1", "p2"]:
+            val = row[prefix]
+            if isinstance(val, pd.Series):
+                df_out.loc[i, val.index] = val.values
+
+    return df_out
 
 
 
 
-
-def avrg_stats_from_multiple_prev_matches_same_surface(train_set, prev_match_num=5):
-    prev_stats_same_surf_dict = single_prev_match_stats_same_surface(train_set)
-
-    data = train_set.copy()
-    data_2 = data
-
-    avrg_prev_stats_same_surface_dict = {}
-    for indx, row in data_2.loc[:].iterrows():
-        for player in [row["p1_id"], row["p2_id"]]:
-
-            prev_matches_lst_for_each_player = []
-            prev_matches_found = 0
-            key = f"prev_p_{player}__for_row{indx}"
-
-            while prev_matches_found < prev_match_num:
-                val = prev_stats_same_surf_dict[key]
-                idx_2 = val[0]
-                prev_stats = val[1]
-
-                if idx_2 is None or pd.isna(idx_2) or idx_2 == "N":
-                    break
-
-                idx_2 = int(idx_2)
-                prev_matches_lst_for_each_player.append(prev_stats)
-                prev_matches_found += 1
-                key = f"prev_p_{player}__for_row{idx_2}"
-
-            if prev_matches_found == 0:
-                avrg_prev_stats_same_surface_dict[f"prev_p_{player}__for_row{indx}"] = np.nan
-            else:
-                avrg_prev_stats_same_surface_dict[f"prev_p_{player}__for_row{indx}"] = (
-                    pd.concat(prev_matches_lst_for_each_player, axis=1)
-                      .mean(axis=1)
-                )
-
-    return avrg_prev_stats_same_surface_dict
 
 
 ''' OVERALL PLAYER STATS '''
 def overall_sats(data):
+    """
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches)
+    """
     prev_stats_dict = single_prev_match_stats(data)
     data = data.copy()
 
@@ -216,6 +277,10 @@ def overall_sats(data):
 
 ''' OVERALL PLAYER SURFACE STATS '''
 def overall_sats_same_surface(data):
+    """
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches)
+    """
     prev_stats_dict_same_surface = single_prev_match_stats_same_surface(data)
     data = data.copy()
 
@@ -269,7 +334,8 @@ def overall_sats_same_surface(data):
 ''' H2H '''
 def h2h(data, labels):
     """
-    dataset must be in chronological order (future -> past)
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches).
     labels must be aligned to dataset rows (same row order), where:
       labels[i] = 0 => p1 won
       labels[i] = 1 => p2 won
@@ -321,7 +387,8 @@ def h2h(data, labels):
 ''' SURFACE H2H'''
 def h2h_surface(data, labels):
     """
-    dataset must be in chronological order (future -> past)
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches).
     labels must be aligned to dataset rows (same row order), where:
       labels[i] = 0 => p1 won
       labels[i] = 1 => p2 won
@@ -381,7 +448,8 @@ def h2h_surface(data, labels):
 ''' ELO '''
 def add_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
     """
-    dataset must be in chronological order (future -> past).
+    dataset must be in chronological order: future -> past
+    (not necessarily consecutive matches).
     y must be aligned to df rows (same row order), where:
       y[i] = 0 => p1 won
       y[i] = 1 => p2 won
@@ -441,7 +509,8 @@ def add_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
 ''' SURFACE ELO '''
 def add_surface_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
     """
-    dataset must be in chronological order (future -> past).
+    dataset must be in chronological order (future -> past)
+    (not necessarily consecutive matches).
     y must be aligned to dataset rows (same row order), where:
       y[i] = 0 => p1 won
       y[i] = 1 => p2 won
@@ -493,6 +562,7 @@ def add_surface_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
     })
 
     return df_surface_elo
+
 
 
 
