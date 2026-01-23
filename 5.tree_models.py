@@ -8,6 +8,8 @@ from preprocessing import preprocessing
 from feature_engineering import *
 from preparing_data_for_tree_models import sliding_time_split
 from pathlib import Path
+from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
+
 
 
 
@@ -156,16 +158,6 @@ splits = sliding_time_split(
 
 
 
-splits = sliding_time_split(
-    preprocessed_matches_50,
-    n_splits=20,
-    test_size_frac=0.10,
-    min_train_size_frac=0.50,
-    step_size_frac=0.05
-)
-
-
-
 # 1a) baseline
 res_baseline = run_test(
     df_sorted_desc=preprocessed_matches_50,
@@ -201,6 +193,8 @@ summarize_results("PREV DIFFS ONLY", res_prev)
 # 3a) elo only
 res_elo = run_test(
     df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
     use_prev_stats= False,
     use_av_prev_stats= False,
     n_prev_matches= None,
@@ -213,8 +207,10 @@ res_elo = run_test(
 summarize_results("ELO ONLY", res_elo)
 
 # 4a) h2h only
-res_elo = run_test(
+res_h2h = run_test(
     df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
     use_prev_stats= False,
     use_av_prev_stats= False,
     n_prev_matches= None,
@@ -224,10 +220,10 @@ res_elo = run_test(
     surface=False,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
-summarize_results("H2H ONLY", res_elo)
+summarize_results("H2H ONLY", res_h2h)
 
 # 5a) use all
-res_both = run_test(
+res_all = run_test(
     df_sorted_desc=preprocessed_matches_50,
     y_all=Y_50,
     splits=splits,
@@ -240,7 +236,7 @@ res_both = run_test(
     surface=False,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
-summarize_results("PREV DIFFS + ELO + H2H", res_both)
+summarize_results("PREV DIFFS + ELO + H2H", res_all)
 
 # 1b) baseline + surface
 res_baseline = run_test(
@@ -277,6 +273,8 @@ summarize_results("PREV DIFFS ONLY  + surface", res_prev)
 # 3b) elo only + surface
 res_elo = run_test(
     df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
     use_prev_stats= False,
     use_av_prev_stats= False,
     n_prev_matches= None,
@@ -289,8 +287,10 @@ res_elo = run_test(
 summarize_results("ELO ONLY  + surface", res_elo)
 
 # 4b) h2h only + surface
-res_elo = run_test(
+res_h2h = run_test(
     df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
     use_prev_stats= False,
     use_av_prev_stats= False,
     n_prev_matches= None,
@@ -300,10 +300,10 @@ res_elo = run_test(
     surface=True,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
-summarize_results("H2H ONLY  + surface", res_elo)
+summarize_results("H2H ONLY  + surface", res_h2h)
 
 # 5b) use all + surface
-res_both = run_test(
+res_all = run_test(
     df_sorted_desc=preprocessed_matches_50,
     y_all=Y_50,
     splits=splits,
@@ -316,7 +316,8 @@ res_both = run_test(
     surface=True,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
-summarize_results("PREV DIFFS + ELO  + surface", res_both)
+summarize_results("PREV DIFFS + ELO  + surface", res_all)
+
 
 
 
