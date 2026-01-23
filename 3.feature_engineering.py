@@ -215,7 +215,7 @@ def overall_sats(data):
     return overall_stats
 
 ''' OVERALL PLAYER SURFACE STATS '''
-def overall_sats_sam_surface(data):
+def overall_sats_same_surface(data):
     prev_stats_dict_same_surface = single_prev_match_stats_same_surface(data)
     data = data.copy()
 
@@ -493,6 +493,7 @@ def add_surface_elo_feature(dataset, y,  initial_elo=1500, k=32, scale=400):
     })
 
     return df_surface_elo
+
 
 
 
