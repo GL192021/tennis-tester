@@ -68,6 +68,23 @@ def enumerating_score(data):
 def enumerating_features(df):
     df = df.copy()
 
+    # ~~~~~~~~~~~ handle missing information ~~~~~~~~~~~~
+    df["winner_entry"] = df["winner_entry"].fillna("UNK")
+    df["loser_entry"] = df["loser_entry"].fillna("UNK")
+
+    df["winner_hand"] = df["winner_hand"].fillna("U")
+    df["loser_hand"] = df["loser_hand"].fillna("U")
+
+    df["winner_ioc"] = df["winner_ioc"].fillna("UNK")
+    df["loser_ioc"] = df["loser_ioc"].fillna("UNK")
+
+    df["surface"] = df["surface"].fillna("UNK")
+    df["tourney_level"] = df["tourney_level"].fillna("UNK")
+    df["tourney_name"] = df["tourney_name"].fillna("UNK")
+    df["round"] = df["round"].fillna("UNK")
+    # -----------------------------------------------------
+
+
     # Initialize LabelEncoders
     le_tourney = LabelEncoder()
     le_surface = LabelEncoder()
@@ -191,7 +208,7 @@ def interchanging_players_position(data, percent, random_state=None):
 
     data_copy = data_copy.rename(columns=rename_map)
 
-    if random_state:
+    if random_state is not None:
         before_swapping_rows_samples = data_copy.sample(frac=percent, replace=False, random_state=random_state)
     else:
         before_swapping_rows_samples = data_copy.sample(frac=percent, replace=False)
@@ -252,5 +269,6 @@ def preprocessing(data, percent, random_state=None, special_tournaments=special_
 
 
     return swapped_data, labels
+
 
 
