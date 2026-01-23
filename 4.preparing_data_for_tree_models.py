@@ -147,6 +147,8 @@ def build_features_for_trees(
     if use_elo:
         elo_df = elo(df, y)
         df_features["elo_diff"] = elo_df["elo_diff"]
+        df_features["elo_p1_win_prob"] = elo_df["elo_p1_win_prob"]
+
 
     # --- H2H ---
     if use_h2h:
@@ -179,6 +181,8 @@ def build_features_for_trees(
         if use_elo:
             surf_elo_df = elo_surface(df, y)
             df_features["surface_elo_diff"] = surf_elo_df["surface_elo_diff"]
+            df_features["surface_elo_p1_win_prob"] = surf_elo_df["surface_elo_p1_win_prob"]
+
 
         if use_h2h:
             h2h_surf_df = h2h_surface(df, y)
@@ -202,6 +206,7 @@ def build_features_for_trees(
         return df_features
     else:
         raise ValueError("Feature dataframe length mismatch!")
+
 
 
 
