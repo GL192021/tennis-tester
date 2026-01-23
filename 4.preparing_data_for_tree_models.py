@@ -2,7 +2,15 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from feature_engineering import *
 
-def sliding_time_split(df, n_splits: int, test_size_frac: float, min_train_size_frac: float , step_size_frac: float, max_train_size_frac: float = None, train_test_dist: int = 0):
+def sliding_time_split(
+    df, 
+    n_splits: int, 
+    test_size_frac: float, 
+    min_train_size_frac: float , 
+    step_size_frac: float, 
+    max_train_size_frac: float = None, 
+    train_test_dist: int = 0
+):
     """
     df is assumed ordered newest -> oldest (index 0 is the latest match).
     Each split uses:
@@ -114,7 +122,7 @@ def build_features_for_trees(
         data: pd.DataFrame,
         use_prev_stats: bool = True,
         use_av_prev_stats: bool = False,
-        n_prev_matches: list = [],
+        n_prev_matches: list[int] | None = None
         use_overall_stats: bool = False,
         use_elo: bool = True,
         use_h2h: bool = True,
@@ -126,23 +134,60 @@ def build_features_for_trees(
         - winner/loser -> to p1/p2
         - mix players's position in each match
         - sorted timewise: future to past matches.
+
+    also data now comes from the split, so it is important to consider all the stats in a leakage-free way
+    
+    return a df with all the stats.
     """
 
     df = data.copy()
 
     if use_prev_stats:
         prev_stats = single_prev_match_stats(df)
+        df_features = pd.concat([df, prev_stats], axis=1)
 
     if use_elo:
         elo = add_elo_feature(df)
+        df_features = pd.concat([df_features, elo], axis=1)
 
     if use_h2h:
         h2h = h2h(df)
+        df_features = pd.concat([df_features, h2h], axis=1)
+
+    if use_overall_stats:
+        overall = overall_sats(data)
+        df_features = pd.concat([df_features, overall], axis=1)
+
+    if use_av_prev_stats:
+        for n in n_prev_matches:
+            n_prev = avrg_stats_from_multiple_prev_matches(data, prev_match_num = n)
+            df_features = pd.concat([df_features, n_prev], axis=1)
+ 
+        
 
     if surface:
-        #we use also surface related stats
+        if use_prev_stats:
+            surface_prev_stats = single_prev_match_stats(df)
+            df_features = pd.concat([df, surface_prev_stats], axis=1)
 
-    print(n)
+        if use_elo:
+            surface_elo = add_elo_feature(df)
+            df_features = pd.concat([df, surface_elo], axis=1)
+
+        if use_h2h:
+            surface_h2h = h2h(df)
+            df_features = pd.concat([df, surface_h2h], axis=1)
+            
+        if use_overall:
+            surface_overall = overall_sats_same_surface(data)
+            df_features = pd.concat([df, surface_overall], axis=1)
+
+
+    #all features dfs shoould have the same length = length of the input df
+    if len(df_features) == len(df)
+        return df_features
+    else:
+        print("Incorrect features")
 
 
 
