@@ -85,10 +85,18 @@ SAME_FEATURES = [
 
 #PREV STATS: STATS FROM CURRENT MATCH THAT WE CANNOT USE IF WE WANT TO BUILD A PREDICTOR, E.G. SCORE OF CURRENT MATCH
 PREV_STAT_COLS = [
-    "sets_ratio_enc", "tie_breaks_enc", "best_of", "round_enc", "minutes",
-    "p1_ioc_enc", "p1_entry_enc",
-    "p1_ace", "p1_df", "p1_svpt", "p1_1stIn", "p1_1stWon", "p1_2ndWon",
-    "p1_SvGms", "p1_bpSaved", "p1_bpFaced",
+    "sets_ratio_enc",
+    "tie_breaks_enc",
+    "minutes",
+    "ace",
+    "df",
+    "svpt",
+    "1stIn",
+    "1stWon",
+    "2ndWon",
+    "SvGms",
+    "bpSaved",
+    "bpFaced",
 ]
 
 OVERALL_STATS = [
@@ -215,6 +223,7 @@ def build_features_for_trees(
         return df_features
     else:
         raise ValueError("Feature dataframe length mismatch!")
+
 
 
 
