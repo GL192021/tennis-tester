@@ -61,11 +61,14 @@ def run_test(
     results = []
 
     for split_id, (train_idx, test_idx) in enumerate(splits, start=1):
-        train_df = df_sorted_desc.iloc[train_idx].copy()
-        test_df  = df_sorted_desc.iloc[test_idx].copy()
+        (train_start, train_end) = train_idx
+        (test_start, test_end) = test_idx
 
-        y_train = y_all[train_idx]
-        y_test  = y_all[test_idx]
+        train_df = df_sorted_desc.iloc[train_start:train_end].copy()
+        test_df  = df_sorted_desc.iloc[test_start:test_end].copy()
+
+        y_train = y_all[train_start:train_end]
+        y_test  = y_all[test_start:test_end]
 
         # combined: [test newer] + [train older]
         combined = pd.concat([test_df, train_df], axis=0, ignore_index=True)
@@ -147,54 +150,173 @@ splits = sliding_time_split(
     preprocessed_matches_50,
     n_splits=20,
     test_size_frac=0.10,
-    min_train_frac=0.50,
-    step_frac=0.05
+    min_train_size_frac=0.50,
+    step_size_frac=0.05
 )
 
 
-# 1) baseline
+
+splits = sliding_time_split(
+    preprocessed_matches_50,
+    n_splits=20,
+    test_size_frac=0.10,
+    min_train_size_frac=0.50,
+    step_size_frac=0.05
+)
+
+
+
+# 1a) baseline
 res_baseline = run_test(
     df_sorted_desc=preprocessed_matches_50,
     y_all=Y_50,
     splits=splits,
-    use_prev_diffs=False,
+    use_prev_stats= False,
+    use_av_prev_stats= False,
+    n_prev_matches= None,
+    use_overall_stats=False,
     use_elo=False,
+    use_h2h=False,
+    surface=False,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
 summarize_results("BASELINE (no prev diffs, no elo)", res_baseline)
 
-# 2) prev diffs only
+# 2a) prev diffs only
 res_prev = run_test(
     df_sorted_desc=preprocessed_matches_50,
     y_all=Y_50,
     splits=splits,
-    use_prev_diffs=True,
+    use_prev_stats= True,
+    use_av_prev_stats= True,
+    n_prev_matches= [3,5,7],
+    use_overall_stats=True,
     use_elo=False,
+    use_h2h=False,
+    surface=False,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
 summarize_results("PREV DIFFS ONLY", res_prev)
 
-# 3) elo only
+# 3a) elo only
 res_elo = run_test(
     df_sorted_desc=preprocessed_matches_50,
-    y_all=Y_50,
-    splits=splits,
-    use_prev_diffs=False,
+    use_prev_stats= False,
+    use_av_prev_stats= False,
+    n_prev_matches= None,
+    use_overall_stats=False,
     use_elo=True,
+    use_h2h=False,
+    surface=False,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
 summarize_results("ELO ONLY", res_elo)
 
-# 4) prev diffs + elo
+# 4a) h2h only
+res_elo = run_test(
+    df_sorted_desc=preprocessed_matches_50,
+    use_prev_stats= False,
+    use_av_prev_stats= False,
+    n_prev_matches= None,
+    use_overall_stats=False,
+    use_elo=False,
+    use_h2h=True,
+    surface=False,
+    model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
+)
+summarize_results("H2H ONLY", res_elo)
+
+# 5a) use all
 res_both = run_test(
     df_sorted_desc=preprocessed_matches_50,
     y_all=Y_50,
     splits=splits,
-    use_prev_diffs=True,
+    use_prev_stats= True,
+    use_av_prev_stats= True,
+    n_prev_matches= [3,5,7],
+    use_overall_stats=True,
     use_elo=True,
+    use_h2h=True,
+    surface=False,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
+summarize_results("PREV DIFFS + ELO + H2H", res_both)
 
-summarize_results("PREV DIFFS + ELO", res_both)
+# 1b) baseline + surface
+res_baseline = run_test(
+    df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
+    use_prev_stats= False,
+    use_av_prev_stats= False,
+    n_prev_matches= None,
+    use_overall_stats=False,
+    use_elo=False,
+    use_h2h=False,
+    surface=True,
+    model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
+)
+summarize_results("BASELINE (no prev diffs, no elo)  + surface", res_baseline)
+
+# 2b) prev diffs only + surface
+res_prev = run_test(
+    df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
+    use_prev_stats= True,
+    use_av_prev_stats= True,
+    n_prev_matches= [3,5,7],
+    use_overall_stats=True,
+    use_elo=False,
+    use_h2h=False,
+    surface=True,
+    model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
+)
+summarize_results("PREV DIFFS ONLY  + surface", res_prev)
+
+# 3b) elo only + surface
+res_elo = run_test(
+    df_sorted_desc=preprocessed_matches_50,
+    use_prev_stats= False,
+    use_av_prev_stats= False,
+    n_prev_matches= None,
+    use_overall_stats=False,
+    use_elo=True,
+    use_h2h=False,
+    surface=True,
+    model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
+)
+summarize_results("ELO ONLY  + surface", res_elo)
+
+# 4b) h2h only + surface
+res_elo = run_test(
+    df_sorted_desc=preprocessed_matches_50,
+    use_prev_stats= False,
+    use_av_prev_stats= False,
+    n_prev_matches= None,
+    use_overall_stats=False,
+    use_elo=False,
+    use_h2h=True,
+    surface=True,
+    model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
+)
+summarize_results("H2H ONLY  + surface", res_elo)
+
+# 5b) use all + surface
+res_both = run_test(
+    df_sorted_desc=preprocessed_matches_50,
+    y_all=Y_50,
+    splits=splits,
+    use_prev_stats= True,
+    use_av_prev_stats= True,
+    n_prev_matches= [3,5,7],
+    use_overall_stats=True,
+    use_elo=True,
+    use_h2h=True,
+    surface=True,
+    model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
+)
+summarize_results("PREV DIFFS + ELO  + surface", res_both)
+
 
 
