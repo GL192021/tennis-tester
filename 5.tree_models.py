@@ -5,23 +5,25 @@ from xgboost import XGBClassifier
 import os
 from preprocessing import preprocessing
 from feature_engineering import *
-from preparing_data_for_tree_models import *
-from preparing_data_for_tree_models_mine import *
+from preparing_data_for_tree_models import make_time_splits_descending, run_test, summarize_results
+from pathlib import Path
 
 
 
 #-------------------------------------------
 
-main_path= "C:/Users/lampris21/Desktop/tennis_predictor__level_1"
+ROOT = Path(__file__).resolve().parent
+DATA_PROCESSED = ROOT / "data" / "processed"
+
 
 
 
 
 #------------------------------------------
-# Load and prepare data
+# Load the combined dataset
 #------------------------------------------
-main_file_name = "combined_2020-2024.csv"
-matches_path = os.path.join(main_path, "combined_2020-2024.csv")
+
+matches_path = DATA_PROCESSED / "combined_2020-2024.csv"
 matches = pd.read_csv(matches_path)
 
 
@@ -80,4 +82,5 @@ res_both = run_test(
     use_elo=True,
     model=DecisionTreeClassifier(max_depth=6, min_samples_leaf=20, random_state=42)
 )
+
 summarize_results("PREV DIFFS + ELO", res_both)
