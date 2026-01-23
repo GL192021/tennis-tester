@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
@@ -195,4 +196,5 @@ res_both = run_test(
 )
 
 summarize_results("PREV DIFFS + ELO", res_both)
+
 
