@@ -179,6 +179,8 @@ Observed:
 - Brier score ≈ **0.22**
 - Calibration curve lies close to the diagonal
 
+![Reliability curve](figures/calibration_curve.png)
+
 Interpretation:
 
 The uncalibrated tree model already produces **well-calibrated probabilities**, which is unusual and indicates:
@@ -231,12 +233,56 @@ The evaluation framework, diagnostics suite, and probabilistic analysis make the
 ---
 
 ## 11. Feature Contribution Analysis
-(Include table + AUC plot)
+#### AUC comparison
+
+![Feature ablation AUC](figures/feature_ablation_auc.png)
+
+#### LogLoss comparison
+
+![Feature ablation LogLoss](figures/feature_ablation_logloss.png)
 
 ## 12. Decision Threshold Behavior
-(Include precision–coverage curve + explanation)
+The precision–coverage curve illustrates the tradeoff between confidence and prediction frequency.
+
+![Precision vs Coverage](figures/precision_coverage_curve.png)
 
 ## 13. Model Capacity and Overfitting
-(Include depth vs AUC plot + justification of chosen depth)
+#### AUC vs Tree Depth
+
+![Depth vs AUC](figures/depth_vs_auc.png)
+
+#### LogLoss vs Tree Depth
+
+![Depth vs LogLoss](figures/depth_vs_logloss.png)
+
+## 14. Feature Importance Analysis
+
+Feature importance was evaluated using two complementary methods:
+
+1. **Tree-based importance**, which reflects how often and how effectively a feature is used for splitting inside the decision tree.
+2. **Permutation importance**, which measures how much predictive performance (AUC) deteriorates when a feature is randomly shuffled, thus indicating its true contribution to model accuracy.
+
+Both methods were applied on a combined feature set including baseline features, Elo ratings, and Head-to-Head (H2H) information.
+
+### 14.1 Tree-Based Feature Importance
+
+Top features ranked by internal tree importance:
+
+| Rank | Feature                               | Importance |
+|-----:|--------------------------------------|-----------:|
+| 1 | `p1_rank_points_minus_p2_rank_points` | 0.561 |
+| 2 | `elo_diff`                             | 0.160 |
+| 3 | `elo_p1_win_prob`                     | 0.153 |
+| 4 | `p1_rank_minus_p2_rank`               | 0.070 |
+| 5 | `p1_age_minus_p2_age`                 | 0.036 |
+
+Interpretation:
+
+The model relies most heavily on **rank points difference**, which represents long-term player strength and historical performance consistency.  
+This is expected, as ATP ranking points encode extensive competitive information and are highly predictive in professional tennis.
+
+Elo-based features (`elo_diff`, `elo_p1_win_prob`) appear immediately after, indicating that the model also strongly exploits dynamic strength signals reflecting recent form and momentum.
+
+
 
 
