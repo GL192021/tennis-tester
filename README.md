@@ -257,6 +257,6 @@ Planned future improvements include:
 ## Motivation
 
 This project was developed as a personal machine learning portfolio project to demonstrate:
-- applied ML engineering,
+- applied ML engineering (here: quantitative sports prediction system),
 - careful experimental design,
 - and the translation of mathematical thinking into practical data science.
