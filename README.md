@@ -44,7 +44,7 @@ It explicitly enforces the following principles:
   This prevents the model from learning from future information and ensures that evaluation metrics reflect true predictive performance.
 
 - **Symmetry between players**  
-  The model does not assume that “player 1 is the winner.”  
+  The model does not assume that “player 1 is the winner”, as in the raw data.
   Player positions are randomly swapped during preprocessing, and the target variable is adjusted accordingly, preventing positional bias.
 
 - **Realistic evaluation protocol**  
