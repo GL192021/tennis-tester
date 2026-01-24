@@ -3,12 +3,12 @@ from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from feature_engineering import *
 
 def sliding_time_split(
-    df, 
-    n_splits: int, 
-    test_size_frac: float, 
-    min_train_size_frac: float , 
-    step_size_frac: float, 
-    max_train_size_frac: float = None, 
+    df,
+    n_splits: int,
+    test_size_frac: float,
+    min_train_size_frac: float ,
+    step_size_frac: float,
+    max_train_size_frac: float = None,
     train_test_dist: int = 0
 ):
     """
@@ -26,7 +26,7 @@ def sliding_time_split(
 
     test_start = 0
 
-    j = 10
+    j = 5
     i = step_size_frac/j
 
     while len(splits) < n_splits:
@@ -151,7 +151,11 @@ def build_features_for_trees(
 
     for col in TOURN_FEATURES:
         if col in df.columns:
-            df_features[col] = df[col]
+            if col != "surface_enc":
+                df_features[col] = df[col]
+            if surface:
+                df_features["surface_enc"] = df["surface_enc"]
+
 
     # --- SINGLE PREVIOUS MATCH STATS ---
     if use_prev_stats:
@@ -223,9 +227,6 @@ def build_features_for_trees(
         return df_features
     else:
         raise ValueError("Feature dataframe length mismatch!")
-
-
-
 
 
 
